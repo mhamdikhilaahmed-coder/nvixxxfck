@@ -1,7 +1,20 @@
 import os
+import sys
+import discord
+from discord import app_commands
+from discord.ext import commands
 from dotenv import load_dotenv
+from utils import (
+    BANNER_URL,
+    FOOTER_TEXT,
+    LOGS_CMD_USE_CHANNEL_ID,
+    can_staff,
+    can_highstaff_or_above,
+    can_owner_or_coowner,
+    log_to_json
+)
 
-# 🔹 Cargar el archivo .env desde la carpeta principal
+# 🔹 Cargar variables desde .env
 load_dotenv()
 
 # 🔹 Leer los IDs de los canales desde el .env
@@ -9,21 +22,18 @@ LOGS_CMD_USE_CHANNEL_ID = int(os.getenv("LOGS_CMD_USE_CHANNEL_ID", 0))
 TICKETS_LOGS_CHANNEL_ID = int(os.getenv("TICKETS_LOGS_CHANNEL_ID", 0))
 PRIVATE_BOT_LOGS_CHANNEL_ID = int(os.getenv("PRIVATE_BOT_LOGS_CHANNEL_ID", 0))
 
-import os
-import sys
+# 🔹 Asegurarse de que Python puede encontrar la carpeta utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import discord
-from discord.ext import commands
-from discord import app_commands
-from dotenv import load_dotenv
-from utils import BANNER_URL, FOOTER_TEXT, LOGS_CMD_USE_CHANNEL_ID, can_staff, can_highstaff_or_above, can_owner_or_coowner, log_to_json
 
-load_dotenv()
-
+# 🔹 Configurar intents y bot
 INTENTS = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=INTENTS)
 
+# ✅ Crear el árbol de comandos slash
+tree = app_commands.CommandTree(bot)
+
 async def log_cmd_use(interaction: discord.Interaction, name: str):
+    """Registra cada uso de un comando slash."""
     try:
         if LOGS_CMD_USE_CHANNEL_ID:
             ch = interaction.client.get_channel(LOGS_CMD_USE_CHANNEL_ID)
@@ -36,12 +46,13 @@ async def log_cmd_use(interaction: discord.Interaction, name: str):
 @bot.event
 async def on_ready():
     try:
-        await bot.tree.sync()
+        await tree.sync()
+        print("✅ Slash commands synced successfully.")
     except Exception as e:
-        print("Sync error:", e)
+        print("⚠️ Error syncing commands:", e)
     print(f"{bot.user} is online!")
 
-@bot.tree.command(name="ping", description="Check bot latency (Pong!)")
+@tree.command(name="ping", description="Check bot latency (Pong!)")
 async def ping(interaction: discord.Interaction):
     await log_cmd_use(interaction, "ping")
     embed = discord.Embed(title="Pong!", description=f"Latency: {round(bot.latency*1000)}ms")
@@ -51,10 +62,9 @@ async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 def run(token_env: str):
-    import os
     token = os.getenv(token_env)
     if not token:
-        raise SystemExit(f"Missing token env: {token_env}")
+        raise SystemExit(f"❌ Missing token env: {token_env}")
     bot.run(token)
 
 if __name__ == "__main__":
