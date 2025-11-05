@@ -70,4 +70,4 @@ async def on_ready():
 @commands.check(can_highstaff_or_above)
 async def backup_create(inter: discord.Interaction):
     await log_cmd(inter, "backup_create")
-    ts = datetime.datetime.utcnow().strftime("%Y%m%d_%
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d_%")
