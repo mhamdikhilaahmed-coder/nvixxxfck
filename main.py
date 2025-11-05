@@ -1,10 +1,13 @@
 import os
 import subprocess
 import time
-from dotenv import load_dotenv
 
-# Cargar variables desde .env
-load_dotenv()
+# ✅ En Render no se necesita load_dotenv, las variables ya están en el entorno
+if os.path.exists(".env"):
+    from dotenv import load_dotenv
+    load_dotenv()
+else:
+    print("⚙️ Using environment variables from Render...")
 
 # Lista de bots: carpeta y variable de token asociada
 bots = [
@@ -20,7 +23,6 @@ bots = [
     ("nuvix_tickets", "NUVIX_TICKETS_TOKEN"),
 ]
 
-# Ejecutar cada bot
 processes = []
 
 print("🚀 Starting Nuvix Suite Pro v2...\n")
@@ -28,7 +30,7 @@ print("🚀 Starting Nuvix Suite Pro v2...\n")
 for folder, token_var in bots:
     token = os.getenv(token_var)
     if not token:
-        print(f"⚠️ Skipping {folder} — no token found in .env for {token_var}")
+        print(f"⚠️ Skipping {folder} — no token found for {token_var}")
         continue
 
     path = os.path.join(os.getcwd(), folder, "bot.py")
@@ -41,7 +43,6 @@ print("\n✨ All available bots launched successfully.")
 print("💡 Press CTRL + C to stop all bots.\n")
 
 try:
-    # Mantiene los procesos activos hasta que se detengan manualmente
     for p in processes:
         p.wait()
 except KeyboardInterrupt:
